@@ -354,27 +354,55 @@ function effectiveStatus(task){
 function apiConfigured(){
   return CONFIG.API_URL && CONFIG.API_URL.indexOf('PASTE_YOUR') === -1;
 }
+function safeParseJson(res){
+  return res.text().then(function(text){
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      // الخادم رجّع HTML مش JSON — غالباً ازدحام مؤقت من جوجل أو رابط /dev بدل /exec
+      throw new Error('__NON_JSON__');
+    }
+  });
+}
+function withRetry(fn){
+  return fn().catch(function(err){
+    if (err && err.message === '__NON_JSON__'){
+      return new Promise(function(resolve){ setTimeout(resolve, 1200); }).then(fn);
+    }
+    throw err;
+  });
+}
+function friendlyError(err){
+  if (err && err.message === '__NON_JSON__'){
+    return new Error('الخادم مشغول حالياً، من فضلك حاول مرة أخرى بعد لحظات');
+  }
+  return err;
+}
 function apiGet(params){
   if (!apiConfigured()) return Promise.reject(new Error('لم يتم ضبط رابط API بعد'));
   var url = new URL(CONFIG.API_URL);
   Object.keys(params).forEach(function(k){
     if (params[k] !== null && params[k] !== undefined) url.searchParams.set(k, params[k]);
   });
-  return fetch(url).then(function(r){ return r.json(); }).then(function(j){
-    if (!j.ok) throw new Error(j.error || 'حدث خطأ');
-    return j.data;
-  });
+  return withRetry(function(){
+    return fetch(url).then(safeParseJson).then(function(j){
+      if (!j.ok) throw new Error(j.error || 'حدث خطأ');
+      return j.data;
+    });
+  }).catch(function(err){ throw friendlyError(err); });
 }
 function apiPost(action, payload){
   if (!apiConfigured()) return Promise.reject(new Error('لم يتم ضبط رابط API بعد'));
-  return fetch(CONFIG.API_URL, {
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ action:action, payload:payload })
-  }).then(function(r){ return r.json(); }).then(function(j){
-    if (!j.ok) throw new Error(j.error || 'حدث خطأ');
-    return j.data;
-  });
+  return withRetry(function(){
+    return fetch(CONFIG.API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:action, payload:payload })
+    }).then(safeParseJson).then(function(j){
+      if (!j.ok) throw new Error(j.error || 'حدث خطأ');
+      return j.data;
+    });
+  }).catch(function(err){ throw friendlyError(err); });
 }
 
 /* ============================ Toast ============================ */
