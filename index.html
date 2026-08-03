@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحة مهام الفريق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F7F4;
+    --bg-2:#EAF2EC;
+    --surface:#FFFFFF;
+    --ink:#152420;
+    --ink-soft:#5C6E63;
+    --primary:#147A5C;
+    --primary-dark:#0E5A44;
+    --primary-soft:#DCF0E6;
+    --amber:#D99A28;
+    --amber-soft:#FBEED2;
+    --coral:#DD5A48;
+    --coral-soft:#FAE0DC;
+    --border:#E1EBE3;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+    --shadow:0 12px 28px -14px rgba(15,40,28,.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(900px 400px at 100% -10%, var(--bg-2), transparent 60%),
+      radial-gradient(700px 400px at -10% 110%, #E4F1E9, transparent 55%),
+      var(--bg);
+    font-family:'Tajawal',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Cairo',sans-serif;}
+  #root{
+    max-width:520px;
+    margin:0 auto;
+    padding:20px 16px 90px;
+    min-height:100vh;
+  }
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{
+    width:38px;height:38px;border-radius:12px;
+    background:linear-gradient(145deg,var(--primary),var(--primary-dark));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:'Cairo';font-weight:800;font-size:16px;
+    box-shadow:var(--shadow);
+  }
+  .brand h1{font-size:17px;margin:0;font-weight:800;}
+  .brand p{margin:0;font-size:12px;color:var(--ink-soft);}
+  .icon-btn{
+    width:38px;height:38px;border-radius:12px;background:var(--surface);
+    border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:17px;color:var(--ink-soft);
+  }
+  .icon-btn:hover{color:var(--primary);border-color:var(--primary-soft);}
+
+  .setup-banner{
+    background:var(--amber-soft);border:1px solid #F0D9A6;color:#7A5A12;
+    padding:12px 14px;border-radius:var(--radius-md);font-size:13px;margin-bottom:18px;line-height:1.7;
+  }
+  .setup-banner code{background:#fff;padding:1px 6px;border-radius:6px;font-size:12px;}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+  }
+
+  /* ---- home ---- */
+  .hero{padding:6px 4px 20px;}
+  .hero .eyebrow{color:var(--primary);font-weight:700;font-size:13px;letter-spacing:.3px;}
+  .hero h2{font-size:24px;margin:6px 0 4px;font-weight:800;}
+  .hero p{color:var(--ink-soft);font-size:14px;margin:0;}
+
+  .emp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .emp-card{
+    padding:16px 14px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;
+    display:flex;flex-direction:column;gap:10px;align-items:flex-start;
+  }
+  .emp-card:active{transform:scale(.97);}
+  .emp-avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:var(--primary-soft);color:var(--primary-dark);
+    display:flex;align-items:center;justify-content:center;font-family:'Cairo';font-weight:800;font-size:15px;
+  }
+  .emp-name{font-family:'Cairo';font-weight:700;font-size:15px;}
+  .ring-wrap{display:flex;align-items:center;gap:8px;width:100%;}
+  .ring-wrap svg{flex-shrink:0;}
+  .ring-label{font-size:11px;color:var(--ink-soft);}
+
+  .secondary-actions{display:flex;flex-direction:column;gap:10px;}
+  .action-row{
+    display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;
+  }
+  .action-row .ic{
+    width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;
+    background:var(--primary-soft);color:var(--primary-dark);
+  }
+  .action-row.amber .ic{background:var(--amber-soft);color:#8A6412;}
+  .action-row .txt strong{display:block;font-family:'Cairo';font-size:14px;}
+  .action-row .txt span{font-size:12px;color:var(--ink-soft);}
+  .action-row .arrow{margin-inline-start:auto;color:var(--ink-soft);}
+
+  /* ---- generic header for sub-views ---- */
+  .subheader{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .back-btn{
+    width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;
+  }
+  .subheader h2{font-size:18px;margin:0;font-weight:800;}
+  .subheader p{margin:0;font-size:12px;color:var(--ink-soft);}
+
+  /* ---- daily view ---- */
+  .date-nav{
+    display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:16px;
+  }
+  .date-nav button{
+    background:var(--bg-2);border:none;width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px;color:var(--primary-dark);
+  }
+  .date-nav .date-info{text-align:center;}
+  .date-nav .date-info strong{display:block;font-family:'Cairo';font-size:14px;}
+  .date-nav .date-info span{font-size:11px;color:var(--ink-soft);}
+  .today-pill{
+    display:inline-block;margin-top:4px;font-size:11px;color:var(--primary);cursor:pointer;text-decoration:underline;
+  }
+
+  .task-card{padding:14px 16px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;}
+  .task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .task-title{font-family:'Cairo';font-weight:700;font-size:15px;margin:0;}
+  .task-details{font-size:13px;color:var(--ink-soft);margin:0;line-height:1.6;}
+  .badge{
+    font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .badge.done{background:var(--primary-soft);color:var(--primary-dark);}
+  .badge.undone{background:var(--coral-soft);color:var(--coral);}
+  .badge.pending{background:var(--amber-soft);color:#8A6412;}
+
+  .task-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    border:none;border-radius:var(--radius-sm);padding:9px 14px;font-family:'Tajawal';font-weight:700;
+    font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn.primary{background:var(--primary);color:#fff;}
+  .btn.primary:hover{background:var(--primary-dark);}
+  .btn.ghost{background:var(--bg-2);color:var(--ink);}
+  .btn.danger-ghost{background:var(--coral-soft);color:var(--coral);}
+  .btn.block{width:100%;justify-content:center;padding:13px;font-size:14px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .icon-mini{
+    width:32px;height:32px;border-radius:9px;border:none;background:var(--bg-2);color:var(--ink-soft);cursor:pointer;font-size:14px;
+  }
+  .icon-mini:hover{color:var(--coral);}
+
+  .empty-state{
+    text-align:center;padding:40px 20px;color:var(--ink-soft);
+  }
+  .empty-state .emoji{font-size:34px;display:block;margin-bottom:10px;}
+
+  /* ---- form ---- */
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;font-family:'Cairo';}
+  .field input[type=text], .field input[type=date], .field input[type=number], .field textarea, .field select{
+    width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1px solid var(--border);
+    font-family:'Tajawal';font-size:14px;background:#fff;color:var(--ink);
+  }
+  .field textarea{min-height:70px;resize:vertical;}
+  .field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235C6E63' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center;padding-inline-start:34px;}
+  .weekday-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .weekday-chip{
+    padding:8px 12px;border-radius:999px;border:1px solid var(--border);font-size:13px;cursor:pointer;
+    background:#fff;user-select:none;
+  }
+  .weekday-chip.on{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .friday-note{font-size:12px;color:var(--ink-soft);margin-top:8px;}
+  .form-card{padding:18px;}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+
+  /* ---- report ---- */
+  .filter-row{display:flex;gap:8px;margin-bottom:16px;}
+  .filter-chip{
+    flex:1;text-align:center;padding:9px 8px;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--border);
+    font-size:13px;font-weight:700;cursor:pointer;color:var(--ink-soft);
+  }
+  .filter-chip.on{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .stat-card{padding:16px;text-align:center;}
+  .stat-card .num{font-family:'Cairo';font-weight:800;font-size:26px;}
+  .stat-card .lbl{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+  .stat-card.total .num{color:var(--ink);}
+  .stat-card.done .num{color:var(--primary);}
+  .stat-card.undone .num{color:var(--coral);}
+  .stat-card.pending .num{color:#8A6412;}
+
+  .top-card{
+    padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+  }
+  .top-card .medal{font-size:28px;}
+  .top-card strong{font-family:'Cairo';display:block;font-size:15px;}
+  .top-card span{font-size:12px;color:var(--ink-soft);}
+
+  .emp-row{padding:14px 16px;margin-bottom:10px;}
+  .emp-row-top{display:flex;justify-content:space-between;margin-bottom:8px;}
+  .emp-row-top strong{font-family:'Cairo';font-size:14px;}
+  .emp-row-top span{font-size:12px;color:var(--ink-soft);}
+  .bar-track{height:8px;border-radius:999px;background:var(--bg-2);overflow:hidden;display:flex;}
+  .bar-seg.done{background:var(--primary);}
+  .bar-seg.undone{background:var(--coral);}
+  .bar-seg.pending{background:var(--amber);}
+
+  /* ---- modal ---- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,30,20,.45);display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:50;backdrop-filter:blur(2px);
+  }
+  .modal{
+    background:#fff;border-radius:22px;padding:30px 24px;max-width:360px;width:100%;text-align:center;
+    box-shadow:0 24px 60px -20px rgba(10,30,20,.4);
+  }
+  .modal .big-emoji{font-size:44px;display:block;margin-bottom:14px;}
+  .modal h3{font-size:19px;margin:0 0 8px;font-family:'Cairo';font-weight:800;}
+  .modal p{font-size:14px;color:var(--ink-soft);margin:0 0 22px;line-height:1.7;}
+
+  .edit-modal{background:#fff;border-radius:20px;padding:22px;max-width:380px;width:100%;}
+  .edit-modal h3{margin:0 0 16px;font-family:'Cairo';font-size:16px;}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;}
+  .modal-actions .btn{flex:1;}
+
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;
+    box-shadow:var(--shadow);z-index:60;opacity:0;transition:opacity .25s ease;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  .loading-dot{
+    display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;
+    animation:pulse 1s infinite ease-in-out;
+  }
+  @keyframes pulse{0%,100%{opacity:.25;}50%{opacity:1;}}
+
+  @media (max-width:360px){
+    .emp-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* =========================================================
+   الإعدادات — الصق رابط Google Apps Script هنا بعد النشر
+========================================================= */
+var CONFIG = {
+  API_URL: 'https://script.google.com/macros/s/AKfycbwe33kZKVVmG8rx8XfFAnEdLmxhFb074r2t2YONWfN6QCrm0t5P-DPPckJDCILbesKV/exec'
+};
+
+var EMPLOYEES = ['سيداحمد', 'حمادة', 'مروا', 'فاطمة'];
+var WEEKDAYS = [
+  { key: 'sat', label: 'السبت', jsDay: 6 },
+  { key: 'sun', label: 'الأحد', jsDay: 0 },
+  { key: 'mon', label: 'الإثنين', jsDay: 1 },
+  { key: 'tue', label: 'الثلاثاء', jsDay: 2 },
+  { key: 'wed', label: 'الأربعاء', jsDay: 3 },
+  { key: 'thu', label: 'الخميس', jsDay: 4 }
+];
+var DAY_LABELS_FULL = { 0:'الأحد',1:'الإثنين',2:'الثلاثاء',3:'الأربعاء',4:'الخميس',5:'الجمعة',6:'السبت' };
+
+/* ============================ الحالة العامة ============================ */
+var state = {
+  view: 'home',
+  currentEmployee: null,
+  currentDate: todayStr(),
+  tasks: [],
+  loading: false,
+  report: null,
+  reportRange: 'week',
+  homeRing: {},
+  addForm: {
+    employee: EMPLOYEES[0],
+    title: '',
+    details: '',
+    weekdays: ['sat','sun','mon','tue','wed','thu'],
+    startDate: todayStr(),
+    weeksCount: 8
+  },
+  congratsShownFor: null,
+  editingTask: null
+};
+
+/* ============================ أدوات التاريخ ============================ */
+function todayStr(){ return formatDateLocal(new Date()); }
+function formatDateLocal(d){
+  var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function parseDateLocal(s){
+  var parts = s.split('-');
+  return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+}
+function addDays(dateStr, n){
+  var d = parseDateLocal(dateStr);
+  d.setDate(d.getDate()+n);
+  return formatDateLocal(d);
+}
+function getWeekStart(dateStr){
+  var d = parseDateLocal(dateStr);
+  var offset = (d.getDay()+1)%7; // أيام منذ آخر سبت
+  d.setDate(d.getDate()-offset);
+  return formatDateLocal(d);
+}
+function niceDate(dateStr){
+  var d = parseDateLocal(dateStr);
+  var dayName = DAY_LABELS_FULL[d.getDay()];
+  return dayName + ' - ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+}
+function isFriday(dateStr){ return parseDateLocal(dateStr).getDay() === 5; }
+
+function generateSeriesDates(startDateStr, weekdayKeys, weeksCount){
+  var weekStart = parseDateLocal(getWeekStart(startDateStr));
+  var dates = [];
+  for (var w=0; w<weeksCount; w++){
+    weekdayKeys.forEach(function(key){
+      var wd = WEEKDAYS.filter(function(x){ return x.key===key; })[0];
+      var offset = (wd.jsDay+1)%7;
+      var d = new Date(weekStart);
+      d.setDate(d.getDate() + w*7 + offset);
+      dates.push(formatDateLocal(d));
+    });
+  }
+  dates.sort();
+  return dates;
+}
+
+function effectiveStatus(task){
+  if (task.status === 'مكتملة') return 'مكتملة';
+  var today = todayStr();
+  if (task.date < today) return 'غير مكتملة';
+  return 'قيد الانتظار';
+}
+
+/* ============================ طبقة الاتصال بالـ API ============================ */
+function apiConfigured(){
+  return CONFIG.API_URL && CONFIG.API_URL.indexOf('PASTE_YOUR') === -1;
+}
+function apiGet(params){
+  if (!apiConfigured()) return Promise.reject(new Error('لم يتم ضبط رابط API بعد'));
+  var url = new URL(CONFIG.API_URL);
+  Object.keys(params).forEach(function(k){
+    if (params[k] !== null && params[k] !== undefined) url.searchParams.set(k, params[k]);
+  });
+  return fetch(url).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok) throw new Error(j.error || 'حدث خطأ');
+    return j.data;
+  });
+}
+function apiPost(action, payload){
+  if (!apiConfigured()) return Promise.reject(new Error('لم يتم ضبط رابط API بعد'));
+  return fetch(CONFIG.API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action:action, payload:payload })
+  }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok) throw new Error(j.error || 'حدث خطأ');
+    return j.data;
+  });
+}
+
+/* ============================ Toast ============================ */
+function toast(msg){
+  var el = document.getElementById('toast');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
+
+/* ============================ التنقل ============================ */
+function goHome(){
+  state.view = 'home';
+  state.congratsShownFor = null;
+  render();
+  loadHomeRings();
+}
+function openDaily(employee){
+  state.currentEmployee = employee;
+  state.currentDate = todayStr();
+  state.view = 'daily';
+  render();
+  loadDailyTasks();
+}
+function openAdd(){
+  state.view = 'add';
+  render();
+}
+function openReport(){
+  state.view = 'report';
+  state.reportRange = 'week';
+  render();
+  loadReport();
+}
+
+/* ============================ تحميل بيانات الرئيسية ============================ */
+function loadHomeRings(){
+  if (!apiConfigured()) return;
+  var ws = getWeekStart(todayStr());
+  var we = addDays(ws, 6);
+  apiGet({ action:'report', dateFrom:ws, dateTo:we }).then(function(data){
+    state.homeRing = data.byEmployee || {};
+    render();
+  }).catch(function(){ /* تجاهل بصمت في الرئيسية */ });
+}
+
+/* ============================ اليومية ============================ */
+function loadDailyTasks(){
+  state.loading = true; render();
+  apiGet({ action:'list', employee: state.currentEmployee, date: state.currentDate })
+    .then(function(data){
+      state.tasks = data.sort(function(a,b){ return a.title.localeCompare(b.title,'ar'); });
+      state.loading = false;
+      render();
+      maybeShowCongrats();
+    })
+    .catch(function(err){
+      state.loading = false;
+      render();
+      toast(err.message);
+    });
+}
+function changeDay(delta){
+  state.currentDate = addDays(state.currentDate, delta);
+  loadDailyTasks();
+}
+function jumpToday(){
+  state.currentDate = todayStr();
+  loadDailyTasks();
+}
+function toggleStatus(task){
+  var newStatus = task.status === 'مكتملة' ? 'غير مكتملة' : 'مكتملة';
+  apiPost('updateStatus', { id: task.id, status: newStatus }).then(function(){
+    task.status = newStatus;
+    render();
+    maybeShowCongrats();
+  }).catch(function(err){ toast(err.message); });
+}
+function maybeShowCongrats(){
+  if (state.currentDate !== todayStr()) return;
+  if (!state.tasks.length) return;
+  var allDone = state.tasks.every(function(t){ return t.status === 'مكتملة'; });
+  var key = state.currentEmployee + '|' + state.currentDate;
+  if (allDone && state.congratsShownFor !== key){
+    state.congratsShownFor = key;
+    showCongratsModal();
+  }
+}
+function deleteTaskInstance(task){
+  if (!confirm('حذف هذه المهمة لهذا اليوم فقط؟')) return;
+  apiPost('deleteOne', { id: task.id }).then(function(){
+    state.tasks = state.tasks.filter(function(t){ return t.id !== task.id; });
+    render();
+    toast('تم الحذف');
+  }).catch(function(err){ toast(err.message); });
+}
+function deleteTaskSeries(task){
+  if (!confirm('سيتم حذف كل تكرار هذه المهمة القادم (من اليوم فصاعداً). هل أنت متأكد؟')) return;
+  apiPost('deleteSeries', { groupId: task.groupId, fromDate: state.currentDate }).then(function(res){
+    state.tasks = state.tasks.filter(function(t){ return t.id !== task.id; });
+    render();
+    toast('تم حذف السلسلة (' + res.deleted + ' مهمة)');
+  }).catch(function(err){ toast(err.message); });
+}
+function openEdit(task){
+  state.editingTask = { id: task.id, title: task.title, details: task.details || '' };
+  render();
+}
+function closeEdit(){
+  state.editingTask = null;
+  render();
+}
+function saveEdit(){
+  var t = state.editingTask;
+  apiPost('updateOne', { id: t.id, title: t.title, details: t.details }).then(function(){
+    var found = state.tasks.filter(function(x){ return x.id === t.id; })[0];
+    if (found){ found.title = t.title; found.details = t.details; }
+    state.editingTask = null;
+    render();
+    toast('تم الحفظ');
+  }).catch(function(err){ toast(err.message); });
+}
+
+/* ============================ إضافة مهمة ============================ */
+function toggleWeekday(key){
+  var i = state.addForm.weekdays.indexOf(key);
+  if (i === -1) state.addForm.weekdays.push(key);
+  else state.addForm.weekdays.splice(i,1);
+  render();
+}
+function submitAdd(){
+  var f = state.addForm;
+  if (!f.title.trim()){ toast('من فضلك اكتب عنوان المهمة'); return; }
+  if (!f.weekdays.length){ toast('اختر يوماً واحداً على الأقل'); return; }
+  var dates = generateSeriesDates(f.startDate, f.weekdays, Number(f.weeksCount) || 1);
+  apiPost('addSeries', { employee:f.employee, title:f.title.trim(), details:f.details.trim(), dates: dates })
+    .then(function(res){
+      toast('تمت إضافة ' + res.count + ' مهمة لـ ' + f.weeksCount + ' أسابيع');
+      state.addForm.title = '';
+      state.addForm.details = '';
+      goHome();
+    })
+    .catch(function(err){ toast(err.message); });
+}
+
+/* ============================ التقرير ============================ */
+function setReportRange(r){
+  state.reportRange = r;
+  loadReport();
+}
+function loadReport(){
+  var params = { action:'report' };
+  if (state.reportRange === 'today'){
+    params.dateFrom = todayStr(); params.dateTo = todayStr();
+  } else if (state.reportRange === 'week'){
+    var ws = getWeekStart(todayStr());
+    params.dateFrom = ws; params.dateTo = addDays(ws,6);
+  }
+  state.loading = true; render();
+  apiGet(params).then(function(data){
+    state.report = data;
+    state.loading = false;
+    render();
+  }).catch(function(err){
+    state.loading = false;
+    render();
+    toast(err.message);
+  });
+}
+
+/* ============================ مودال التهنئة ============================ */
+function showCongratsModal(){
+  state.showCongrats = true;
+  render();
+}
+function hideCongrats(){
+  state.showCongrats = false;
+  goHome();
+}
+
+/* ============================ العرض (Render) ============================ */
+function render(){
+  var root = document.getElementById('root');
+  window.__objStore = [];
+  var html = '';
+
+  if (state.view === 'home') html = renderHome();
+  else if (state.view === 'daily') html = renderDaily();
+  else if (state.view === 'add') html = renderAdd();
+  else if (state.view === 'report') html = renderReport();
+
+  if (!apiConfigured()){
+    html = '<div class="setup-banner">⚠️ لم يتم ضبط الاتصال بقاعدة البيانات بعد. افتح ملف <code>index.html</code> وضع رابط Google Apps Script داخل <code>CONFIG.API_URL</code> في أعلى الملف.</div>' + html;
+  }
+
+  if (state.editingTask){
+    html += renderEditModal();
+  }
+  if (state.showCongrats){
+    html += renderCongratsModal();
+  }
+
+  root.innerHTML = html;
+}
+
+function ringSvg(pct, size){
+  size = size || 40;
+  var r = (size-6)/2, c = 2*Math.PI*r;
+  var offset = c - (pct/100)*c;
+  var color = pct >= 100 ? 'var(--primary)' : (pct >= 50 ? 'var(--amber)' : 'var(--coral)');
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">' +
+    '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" stroke="var(--bg-2)" stroke-width="5" fill="none"/>' +
+    '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" stroke="'+color+'" stroke-width="5" fill="none" ' +
+      'stroke-dasharray="'+c+'" stroke-dashoffset="'+offset+'" stroke-linecap="round" ' +
+      'transform="rotate(-90 '+size/2+' '+size/2+')"/>' +
+    '</svg>';
+}
+
+function renderHome(){
+  var s = '<div class="topbar"><div class="brand">' +
+    '<div class="mark">ف</div>' +
+    '<div><h1>لوحة مهام الفريق</h1><p>تابع مهامك اليومية بخفة</p></div>' +
+    '</div></div>';
+
+  s += '<div class="hero"><div class="eyebrow">مرحباً 👋</div>' +
+    '<h2>مين هيشتغل النهارده؟</h2>' +
+    '<p>اختر اسمك لعرض مهامك، أو راجع تقرير الفريق</p></div>';
+
+  s += '<div class="emp-grid">';
+  EMPLOYEES.forEach(function(emp){
+    var r = state.homeRing[emp];
+    var pct = r && r.total ? Math.round((r.completed/r.total)*100) : 0;
+    var lbl = r ? (r.completed + '/' + r.total + ' هذا الأسبوع') : 'جاري التحميل…';
+    s += '<div class="card emp-card" onclick="openDaily(\''+emp+'\')">' +
+      '<div class="emp-avatar">'+emp.charAt(0)+'</div>' +
+      '<div class="emp-name">'+emp+'</div>' +
+      '<div class="ring-wrap">'+ringSvg(pct,34)+'<span class="ring-label">'+lbl+'</span></div>' +
+      '</div>';
+  });
+  s += '</div>';
+
+  s += '<div class="secondary-actions">';
+  s += '<div class="card action-row" onclick="openReport()">' +
+    '<div class="ic">📊</div><div class="txt"><strong>تقرير الفريق</strong><span>عدد المهام والمكتملة والأكثر إنجازاً</span></div>' +
+    '<div class="arrow">‹</div></div>';
+  s += '<div class="card action-row amber" onclick="openAdd()">' +
+    '<div class="ic">➕</div><div class="txt"><strong>إضافة مهمة جديدة</strong><span>تتكرر أسبوعياً تلقائياً</span></div>' +
+    '<div class="arrow">‹</div></div>';
+  s += '</div>';
+
+  return s;
+}
+
+function renderDaily(){
+  var emp = state.currentEmployee;
+  var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
+    '<div><h2>مهام '+emp+'</h2><p>عرض يومي قابل للتنقل</p></div></div>';
+
+  s += '<div class="card date-nav">' +
+    '<button onclick="changeDay(-1)">‹</button>' +
+    '<div class="date-info"><strong>'+niceDate(state.currentDate)+'</strong>' +
+    (state.currentDate !== todayStr() ? '<span class="today-pill" onclick="jumpToday()">الرجوع لليوم</span>' : '<span>اليوم</span>') +
+    '</div>' +
+    '<button onclick="changeDay(1)">›</button>' +
+    '</div>';
+
+  if (state.loading){
+    s += '<div class="empty-state"><span class="loading-dot"></span> جاري التحميل…</div>';
+    return s;
+  }
+
+  if (isFriday(state.currentDate)){
+    s += '<div class="empty-state"><span class="emoji">🌿</span>يوم الجمعة يوم راحة<br>استمتع بيومك!</div>';
+    return s;
+  }
+
+  if (!state.tasks.length){
+    s += '<div class="empty-state"><span class="emoji">🗒️</span>لا توجد مهام في هذا اليوم</div>';
+    return s;
+  }
+
+  state.tasks.forEach(function(t){
+    var eff = effectiveStatus(t);
+    var badgeClass = eff === 'مكتملة' ? 'done' : (eff === 'غير مكتملة' ? 'undone' : 'pending');
+    s += '<div class="card task-card">' +
+      '<div class="task-top">' +
+        '<h3 class="task-title" onclick="openEdit('+attr(t)+')" style="cursor:pointer">'+escapeHtml(t.title)+'</h3>' +
+        '<span class="badge '+badgeClass+'">'+eff+'</span>' +
+      '</div>' +
+      (t.details ? '<p class="task-details">'+escapeHtml(t.details)+'</p>' : '') +
+      '<div class="task-actions">' +
+        '<button class="btn '+(t.status==='مكتملة'?'ghost':'primary')+'" onclick="toggleStatus('+attr(t)+')">' +
+          (t.status==='مكتملة' ? '↺ إلغاء الإنجاز' : '✓ تم الإنجاز') +
+        '</button>' +
+        '<button class="icon-mini" title="حذف اليوم فقط" onclick="deleteTaskInstance('+attr(t)+')">🗑</button>' +
+        '<button class="icon-mini" title="حذف السلسلة القادمة" onclick="deleteTaskSeries('+attr(t)+')">⏭🗑</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  return s;
+}
+
+function renderAdd(){
+  var f = state.addForm;
+  var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
+    '<div><h2>إضافة مهمة جديدة</h2><p>تتكرر أسبوعياً على نفس الأيام</p></div></div>';
+
+  s += '<div class="card form-card">';
+
+  s += '<div class="field"><label>الموظف المسؤول</label><select onchange="state.addForm.employee=this.value">';
+  EMPLOYEES.forEach(function(emp){
+    s += '<option value="'+emp+'" '+(f.employee===emp?'selected':'')+'>'+emp+'</option>';
+  });
+  s += '</select></div>';
+
+  s += '<div class="field"><label>عنوان المهمة</label>' +
+    '<input type="text" placeholder="مثال: متابعة تقارير المبيعات" value="'+escapeAttr(f.title)+'" oninput="state.addForm.title=this.value"></div>';
+
+  s += '<div class="field"><label>تفاصيل المهمة (اختياري)</label>' +
+    '<textarea placeholder="أي تفاصيل إضافية…" oninput="state.addForm.details=this.value">'+escapeHtml(f.details)+'</textarea></div>';
+
+  s += '<div class="field"><label>أيام التكرار الأسبوعي</label><div class="weekday-grid">';
+  WEEKDAYS.forEach(function(wd){
+    var on = f.weekdays.indexOf(wd.key) !== -1;
+    s += '<div class="weekday-chip '+(on?'on':'')+'" onclick="toggleWeekday(\''+wd.key+'\')">'+wd.label+'</div>';
+  });
+  s += '</div><div class="friday-note">يوم الجمعة يوم راحة ولا يتم جدولة مهام فيه 🌿</div></div>';
+
+  s += '<div class="field"><label>ابتداءً من أسبوع</label>' +
+    '<input type="date" value="'+f.startDate+'" onchange="state.addForm.startDate=this.value"></div>';
+
+  s += '<div class="field"><label>عدد أسابيع التكرار</label>' +
+    '<input type="number" min="1" max="52" value="'+f.weeksCount+'" onchange="state.addForm.weeksCount=this.value">' +
+    '<div class="hint">هتتضاف نفس المهمة تلقائياً لنفس الأيام كل أسبوع لعدد الأسابيع دي</div></div>';
+
+  s += '<button class="btn primary block" onclick="submitAdd()">إضافة المهمة للأسابيع القادمة</button>';
+  s += '</div>';
+
+  return s;
+}
+
+function renderReport(){
+  var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
+    '<div><h2>تقرير الفريق</h2><p>نظرة عامة على الإنجاز</p></div></div>';
+
+  s += '<div class="filter-row">' +
+    filterChip('today','اليوم') + filterChip('week','هذا الأسبوع') + filterChip('all','الكل') +
+    '</div>';
+
+  if (state.loading || !state.report){
+    s += '<div class="empty-state"><span class="loading-dot"></span> جاري تحميل التقرير…</div>';
+    return s;
+  }
+
+  var r = state.report;
+  s += '<div class="stat-grid">' +
+    statCard('total', r.total, 'إجمالي المهام') +
+    statCard('done', r.completed, 'مكتملة') +
+    statCard('undone', r.incomplete, 'غير مكتملة') +
+    statCard('pending', r.pending, 'قيد الانتظار') +
+    '</div>';
+
+  if (r.topEmployee){
+    s += '<div class="card top-card"><div class="medal">🏆</div>' +
+      '<div><strong>'+r.topEmployee+'</strong><span>الأكثر إنجازاً — '+r.topCount+' مهمة مكتملة</span></div></div>';
+  }
+
+  s += '<div>';
+  Object.keys(r.byEmployee).forEach(function(emp){
+    var e = r.byEmployee[emp];
+    var total = e.total || 1;
+    s += '<div class="card emp-row">' +
+      '<div class="emp-row-top"><strong>'+emp+'</strong><span>'+e.total+' مهمة</span></div>' +
+      '<div class="bar-track">' +
+        '<div class="bar-seg done" style="width:'+(e.completed/total*100)+'%"></div>' +
+        '<div class="bar-seg undone" style="width:'+(e.incomplete/total*100)+'%"></div>' +
+        '<div class="bar-seg pending" style="width:'+(e.pending/total*100)+'%"></div>' +
+      '</div>' +
+    '</div>';
+  });
+  if (!Object.keys(r.byEmployee).length){
+    s += '<div class="empty-state"><span class="emoji">📭</span>لا توجد بيانات لهذه الفترة</div>';
+  }
+  s += '</div>';
+
+  return s;
+}
+function filterChip(key,label){
+  return '<div class="filter-chip '+(state.reportRange===key?'on':'')+'" onclick="setReportRange(\''+key+'\')">'+label+'</div>';
+}
+function statCard(cls,num,lbl){
+  return '<div class="card stat-card '+cls+'"><div class="num">'+num+'</div><div class="lbl">'+lbl+'</div></div>';
+}
+
+function renderEditModal(){
+  var t = state.editingTask;
+  return '<div class="overlay"><div class="edit-modal">' +
+    '<h3>تعديل المهمة</h3>' +
+    '<div class="field"><label>العنوان</label><input type="text" value="'+escapeAttr(t.title)+'" oninput="state.editingTask.title=this.value"></div>' +
+    '<div class="field"><label>التفاصيل</label><textarea oninput="state.editingTask.details=this.value">'+escapeHtml(t.details)+'</textarea></div>' +
+    '<div class="modal-actions">' +
+      '<button class="btn ghost" onclick="closeEdit()">إلغاء</button>' +
+      '<button class="btn primary" onclick="saveEdit()">حفظ</button>' +
+    '</div></div></div>';
+}
+
+function renderCongratsModal(){
+  return '<div class="overlay"><div class="modal">' +
+    '<span class="big-emoji">🎉</span>' +
+    '<h3>رائع! لقد أتممت مهامك اليوم</h3>' +
+    '<p>ننتظر إبداعك غداً. شكراً لك</p>' +
+    '<button class="btn primary block" onclick="hideCongrats()">العودة للرئيسية</button>' +
+    '</div></div>';
+}
+
+/* ============================ أدوات مساعدة ============================ */
+function escapeHtml(str){
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+function escapeAttr(str){ return escapeHtml(str); }
+function attr(obj){
+  // يمرر كائن JS بأمان كوسيطة داخل onclick بترميزه في data-uri صغير
+  var idx = window.__objStore.push(obj) - 1;
+  return '__objStore['+idx+']';
+}
+window.__objStore = [];
+
+/* ============================ بدء التشغيل ============================ */
+render();
+if (state.view === 'home') loadHomeRings();
+</script>
+</body>
+</html>
