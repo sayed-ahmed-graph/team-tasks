@@ -253,6 +253,15 @@
   @media (max-width:360px){
     .emp-grid{grid-template-columns:1fr 1fr;}
   }
+
+  .auth-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg)}
+  .auth-card{width:100%;max-width:420px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow)}
+  .auth-card h1{margin:0 0 8px;font-size:24px}.auth-card p{color:var(--muted);line-height:1.7;margin:0 0 22px}
+  .auth-card input{width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+  .auth-error{color:var(--coral);font-size:13px;margin:10px 0;min-height:18px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .logout-btn{border:1px solid var(--border);border-radius:999px;padding:8px 12px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -279,6 +288,9 @@ var DAY_LABELS_FULL = { 0:'الأحد',1:'الإثنين',2:'الثلاثاء',3
 
 /* ============================ الحالة العامة ============================ */
 var state = {
+  authenticated: false,
+  user: null,
+  authError: '',
   view: 'home',
   currentEmployee: null,
   currentDate: todayStr(),
@@ -385,24 +397,54 @@ function apiGet(params){
     if (params[k] !== null && params[k] !== undefined) url.searchParams.set(k, params[k]);
   });
   return withRetry(function(){
-    return fetch(url).then(safeParseJson).then(function(j){
+    return fetch(url, { headers: authHeaders() }).then(function(res){ if(res.status===401){ logout(false); throw new Error('انتهت جلسة الدخول، سجّل الدخول مرة أخرى'); } return res; }).then(safeParseJson).then(function(j){
       if (!j.ok) throw new Error(j.error || 'حدث خطأ');
       return j.data;
     });
   }).catch(function(err){ throw friendlyError(err); });
+}
+function authHeaders(){
+  var token = sessionStorage.getItem('youpek_tasks_token');
+  return token ? { 'Authorization':'Bearer '+token } : {};
 }
 function apiPost(action, payload){
   if (!apiConfigured()) return Promise.reject(new Error('لم يتم ضبط رابط API بعد'));
   return withRetry(function(){
     return fetch(CONFIG.API_URL, {
       method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      headers:Object.assign({'Content-Type':'text/plain;charset=utf-8'}, authHeaders()),
       body: JSON.stringify({ action:action, payload:payload })
     }).then(safeParseJson).then(function(j){
       if (!j.ok) throw new Error(j.error || 'حدث خطأ');
       return j.data;
     });
   }).catch(function(err){ throw friendlyError(err); });
+}
+
+/* ============================ تسجيل الدخول ============================ */
+function submitLogin(){
+  var username=(document.getElementById('login-username').value||'').trim();
+  var password=document.getElementById('login-password').value||'';
+  state.authError='';
+  fetch(CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',payload:{username:username,password:password}})})
+    .then(safeParseJson).then(function(j){
+      if(!j.ok) throw new Error(j.error||'تعذر تسجيل الدخول');
+      sessionStorage.setItem('youpek_tasks_token',j.data.token);
+      state.user=j.data.user; state.authenticated=true; state.view='home'; state.authError=''; render(); loadHomeRings();
+    }).catch(function(err){state.authError=err.message||'تعذر تسجيل الدخول';render();});
+}
+function logout(showMessage){
+  sessionStorage.removeItem('youpek_tasks_token');
+  state.authenticated=false; state.user=null; state.view='home'; state.currentEmployee=null;
+  if(showMessage!==false) state.authError='تم تسجيل الخروج';
+  render();
+}
+function renderLogin(){
+  return '<div class="auth-shell"><form class="auth-card" onsubmit="event.preventDefault();submitLogin()">'+
+    '<div class="mark">ف</div><h1>لوحة مهام فريق YouPek</h1><p>سجّل الدخول بحسابك لمتابعة مهام الفريق.</p>'+
+    '<div class="field"><label for="login-username">اسم المستخدم</label><input id="login-username" name="username" autocomplete="username" required placeholder="اسم المستخدم"></div>'+
+    '<div class="field"><label for="login-password">كلمة المرور</label><input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="كلمة المرور"></div>'+
+    '<div class="auth-error">'+escapeHtml(state.authError||'')+'</div><button class="btn primary block" type="submit">تسجيل الدخول</button></form></div>';
 }
 
 /* ============================ Toast ============================ */
@@ -435,6 +477,7 @@ function openDaily(employee){
   loadDailyTasks();
 }
 function openAdd(){
+  if (!state.user || state.user.role !== 'admin') { toast('إضافة المهام متاحة لسيد أحمد فقط'); return; }
   state.view = 'add';
   render();
 }
@@ -499,6 +542,7 @@ function maybeShowCongrats(){
   }
 }
 function deleteTaskInstance(task){
+  if (!state.user || state.user.role !== 'admin') { toast('حذف المهام متاح لسيد أحمد فقط'); return; }
   if (!confirm('حذف هذه المهمة لهذا اليوم فقط؟')) return;
   apiPost('deleteOne', { id: task.id }).then(function(){
     state.tasks = state.tasks.filter(function(t){ return t.id !== task.id; });
@@ -507,12 +551,20 @@ function deleteTaskInstance(task){
   }).catch(function(err){ toast(err.message); });
 }
 function deleteTaskSeries(task){
+  if (!state.user || state.user.role !== 'admin') { toast('حذف المهام متاح لسيد أحمد فقط'); return; }
   if (!confirm('سيتم حذف كل تكرار هذه المهمة القادم (من اليوم فصاعداً). هل أنت متأكد؟')) return;
   apiPost('deleteSeries', { groupId: task.groupId, fromDate: state.currentDate }).then(function(res){
     state.tasks = state.tasks.filter(function(t){ return t.id !== task.id; });
     render();
     toast('تم حذف السلسلة (' + res.deleted + ' مهمة)');
   }).catch(function(err){ toast(err.message); });
+}
+function rollTaskToTomorrow(task){
+  if (!confirm('ترحيل المهمة إلى اليوم التالي؟ يمكنك ترحيلها مرة أخرى لاحقاً.')) return;
+  apiPost('rollTask',{id:task.id}).then(function(result){
+    state.tasks=state.tasks.filter(function(t){return t.id!==task.id;});
+    render(); toast('تم ترحيل المهمة إلى '+result.date);
+  }).catch(function(err){toast(err.message);});
 }
 function openEdit(task){
   state.editingTask = { id: task.id, title: task.title, details: task.details || '' };
@@ -541,6 +593,7 @@ function toggleWeekday(key){
   render();
 }
 function submitAdd(){
+  if (!state.user || state.user.role !== 'admin') { toast('إضافة المهام متاحة لسيد أحمد فقط'); return; }
   var f = state.addForm;
   if (!f.title.trim()){ toast('من فضلك اكتب عنوان المهمة'); return; }
   if (!f.weekdays.length){ toast('اختر يوماً واحداً على الأقل'); return; }
@@ -593,6 +646,7 @@ function hideCongrats(){
 /* ============================ العرض (Render) ============================ */
 function render(){
   var root = document.getElementById('root');
+  if (!state.authenticated) { root.innerHTML = renderLogin(); return; }
   window.__objStore = [];
   var html = '';
 
@@ -631,8 +685,8 @@ function ringSvg(pct, size){
 function renderHome(){
   var s = '<div class="topbar"><div class="brand">' +
     '<div class="mark">ف</div>' +
-    '<div><h1>لوحة مهام الفريق</h1><p>تابع مهامك اليومية بخفة</p></div>' +
-    '</div></div>';
+    '<div><h1>لوحة مهام الفريق</h1><p>أهلاً '+escapeHtml(state.user ? state.user.displayName : '')+'</p></div>' +
+    '</div><button class="logout-btn" onclick="logout()">تسجيل الخروج</button></div>';
 
   s += '<div class="hero"><div class="eyebrow">مرحباً 👋</div>' +
     '<h2>مين هيشتغل النهارده؟</h2>' +
@@ -655,9 +709,11 @@ function renderHome(){
   s += '<div class="card action-row" onclick="openReport()">' +
     '<div class="ic">📊</div><div class="txt"><strong>تقرير الفريق</strong><span>عدد المهام والمكتملة والأكثر إنجازاً</span></div>' +
     '<div class="arrow">‹</div></div>';
-  s += '<div class="card action-row amber" onclick="openAdd()">' +
-    '<div class="ic">➕</div><div class="txt"><strong>إضافة مهمة جديدة</strong><span>تتكرر أسبوعياً تلقائياً</span></div>' +
-    '<div class="arrow">‹</div></div>';
+  if (state.user && state.user.role === 'admin') {
+    s += '<div class="card action-row amber" onclick="openAdd()">' +
+      '<div class="ic">➕</div><div class="txt"><strong>إضافة مهمة جديدة</strong><span>تتكرر أسبوعياً تلقائياً</span></div>' +
+      '<div class="arrow">‹</div></div>';
+  }
   s += '</div>';
 
   return s;
@@ -704,8 +760,9 @@ function renderDaily(){
         '<button class="btn '+(t.status==='مكتملة'?'ghost':'primary')+'" onclick="toggleStatus('+attr(t)+')">' +
           (t.status==='مكتملة' ? '↺ إلغاء الإنجاز' : '✓ تم الإنجاز') +
         '</button>' +
-        '<button class="icon-mini" title="حذف اليوم فقط" onclick="deleteTaskInstance('+attr(t)+')">🗑</button>' +
-        '<button class="icon-mini" title="حذف السلسلة القادمة" onclick="deleteTaskSeries('+attr(t)+')">⏭🗑</button>' +
+        '<button class="btn ghost" onclick="rollTaskToTomorrow('+attr(t)+')">↷ ترحيل للغد</button>' +
+        (state.user && state.user.role === 'admin' ? '<button class="icon-mini" title="حذف اليوم فقط" onclick="deleteTaskInstance('+attr(t)+')">🗑</button>' +
+        '<button class="icon-mini" title="حذف السلسلة القادمة" onclick="deleteTaskSeries('+attr(t)+')">⏭🗑</button>' : '') +
       '</div>' +
     '</div>';
   });
@@ -842,8 +899,14 @@ function attr(obj){
 window.__objStore = [];
 
 /* ============================ بدء التشغيل ============================ */
-render();
-if (state.view === 'home') loadHomeRings();
+(function initAuth(){
+  var token=sessionStorage.getItem('youpek_tasks_token');
+  if(!token){render();return;}
+  fetch(CONFIG.API_URL+'?action=me',{headers:{'Authorization':'Bearer '+token}}).then(safeParseJson).then(function(j){
+    if(!j.ok) throw new Error('invalid session');
+    state.user=j.data; state.authenticated=true; render(); loadHomeRings();
+  }).catch(function(){sessionStorage.removeItem('youpek_tasks_token');state.authenticated=false;state.user=null;render();});
+})();
 </script>
 </body>
 </html>
