@@ -441,7 +441,7 @@ function logout(showMessage){
 }
 function renderLogin(){
   return '<div class="auth-shell"><form class="auth-card" onsubmit="event.preventDefault();submitLogin()">'+
-    '<div class="mark">نحن هنا لنصنع مستقبل نفتخر به</div><h1>لوحة مهام فريق YouPek</h1><p>سجّل الدخول بحسابك لمتابعة مهامك اليوم.</p>'+
+    '<h1>لوحة مهام فريق YouPek</h1><p>سجّل الدخول بحسابك لمتابعة مهامك اليوم.</p>'+
     '<div class="field"><label for="login-username">اسم المستخدم</label><input id="login-username" name="username" autocomplete="username" required placeholder="اسم المستخدم"></div>'+
     '<div class="field"><label for="login-password">كلمة المرور</label><input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="كلمة المرور"></div>'+
     '<div class="auth-error">'+escapeHtml(state.authError||'')+'</div><button class="btn primary block" type="submit">تسجيل الدخول</button></form></div>';
