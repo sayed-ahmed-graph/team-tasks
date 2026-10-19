@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>لوحة مهام الفريق</title>
+<title>مدير يوبك الرقمي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/x-icon" href="https://admin.youpek.com/storage/settings/1777553364-favicon.png">
@@ -112,6 +112,21 @@
   .action-row .txt strong{display:block;font-family:'Cairo';font-size:14px;}
   .action-row .txt span{font-size:12px;color:var(--ink-soft);}
   .action-row .arrow{margin-inline-start:auto;color:var(--ink-soft);}
+
+
+  /* ---- quick links on home ---- */
+  .quick-links{margin:0 0 20px;padding:14px 12px 12px;}
+  .quick-links-title{font-family:'Cairo';font-size:13px;font-weight:800;margin:0 0 12px;}
+  .quick-links-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  .quick-link{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;
+    min-width:0;padding:10px 3px;border-radius:12px;text-decoration:none;color:var(--ink);
+    border:1px solid transparent;transition:background .15s ease,border-color .15s ease;}
+  .quick-link:hover{background:var(--bg);border-color:var(--border);}
+  .quick-link:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  .quick-link-icon{width:42px;height:42px;border-radius:13px;background:var(--primary-soft);color:var(--primary-dark);
+    display:flex;align-items:center;justify-content:center;font-size:21px;}
+  .quick-link-label{font-family:'Cairo';font-size:10px;font-weight:700;text-align:center;line-height:1.5;overflow-wrap:anywhere;}
+  @media(max-width:360px){.quick-links{padding:12px 8px}.quick-links-grid{gap:3px}.quick-link-label{font-size:9px}.quick-link-icon{width:38px;height:38px}}
 
   /* ---- generic header for sub-views ---- */
   .subheader{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
@@ -742,6 +757,19 @@ function renderHome(){
     '<div class="mark">ف</div>' +
     '<div><h1>لوحة مهام الفريق</h1><p>أهلاً '+escapeHtml(state.user ? state.user.displayName : '')+'</p></div>' +
     '</div><button class="logout-btn" onclick="logout()">تسجيل الخروج</button></div>';
+
+  s += '<section class="card quick-links" aria-label="روابط سريعة">' +
+    '<h2 class="quick-links-title">روابط سريعة</h2>' +
+    '<div class="quick-links-grid">' +
+    '<a class="quick-link" href="https://search.google.com/search-console?resource_id=sc-domain:youpek.com" target="_blank" rel="noopener noreferrer" aria-label="فتح Google Search Console">' +
+      '<span class="quick-link-icon" aria-hidden="true">📈</span><span class="quick-link-label">جوجل كونسول</span></a>' +
+    '<a class="quick-link" href="https://youpek.com/" target="_blank" rel="noopener noreferrer" aria-label="زيارة منصة YouPek">' +
+      '<span class="quick-link-icon" aria-hidden="true">🌐</span><span class="quick-link-label">زيارة المنصة</span></a>' +
+    '<a class="quick-link" href="https://admin.youpek.com/" target="_blank" rel="noopener noreferrer" aria-label="فتح لوحة التحكم">' +
+      '<span class="quick-link-icon" aria-hidden="true">⚙️</span><span class="quick-link-label">لوحة التحكم</span></a>' +
+    '<a class="quick-link" href="https://chat.whatsapp.com/G28RWkjkyGzC5Eg29RNlXB" target="_blank" rel="noopener noreferrer" aria-label="فتح جروب الفريق على واتساب">' +
+      '<span class="quick-link-icon" aria-hidden="true">💬</span><span class="quick-link-label">واتساب الفريق</span></a>' +
+    '</div></section>';
 
   s += '<div class="hero"><div class="eyebrow">مرحباً 👋</div>' +
     '<h2>لا تتخذ اي إجراء بمهام غيرك</h2>' +
