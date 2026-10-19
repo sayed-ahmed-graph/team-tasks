@@ -239,6 +239,16 @@
   .reply-card-actions .btn{flex:1;min-width:130px;}
   .reply-placeholder-note{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:8px;}
   .reply-hidden{display:none!important;}
+  /* ---- important resources / links ---- */
+  .resource-intro{padding:15px 16px;margin-bottom:14px;line-height:1.8;font-size:13px;color:var(--ink-soft);}
+  .resource-card{padding:14px 15px;margin-bottom:10px;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);transition:transform .15s ease,border-color .15s ease;}
+  .resource-card:hover{border-color:var(--primary);transform:translateY(-1px);}
+  .resource-icon{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--primary-soft);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;font-size:19px;}
+  .resource-copy{min-width:0;flex:1;}
+  .resource-copy strong{display:block;font-family:'Cairo';font-size:13px;line-height:1.7;}
+  .resource-copy span{display:block;color:var(--ink-soft);font-size:11px;line-height:1.6;margin-top:2px;}
+  .resource-arrow{font-size:18px;color:var(--ink-soft);flex-shrink:0;}
+  .resource-card.disabled{opacity:.65;cursor:default;}
 
   .emp-row{padding:14px 16px;margin-bottom:10px;}
   .emp-row-top{display:flex;justify-content:space-between;margin-bottom:8px;}
@@ -525,6 +535,10 @@ function openReplies(){
   state.view = 'replies';
   render();
 }
+function openResources(){
+  state.view = 'resources';
+  render();
+}
 
 /* ============================ تحميل بيانات الرئيسية ============================ */
 function loadHomeRings(){
@@ -694,6 +708,7 @@ function render(){
   else if (state.view === 'report') html = renderReport();
   else if (state.view === 'faq') html = renderFaq();
   else if (state.view === 'replies') html = renderReplies();
+  else if (state.view === 'resources') html = renderResources();
 
   if (!apiConfigured()){
     html = '<div class="setup-banner">⚠️ لم يتم ضبط الاتصال بقاعدة البيانات بعد. افتح ملف <code>index.html</code> وضع رابط Google Apps Script داخل <code>CONFIG.API_URL</code> في أعلى الملف.</div>' + html;
@@ -754,6 +769,9 @@ function renderHome(){
     '<div class="arrow">‹</div></div>';
   s += '<div class="card action-row" onclick="openReplies()">' +
     '<div class="ic">💬</div><div class="txt"><strong>قوالب ردود جاهزة</strong><span>رسائل قابلة للتعديل والنسخ للرد على المستخدمين</span></div>' +
+    '<div class="arrow">‹</div></div>';
+  s += '<div class="card action-row" onclick="openResources()">' +
+    '<div class="ic">🔗</div><div class="txt"><strong>موارد وروابط مهمة</strong><span>روابط الفريق وملفات الهوية والمنصة</span></div>' +
     '<div class="arrow">‹</div></div>';
   if (state.user && state.user.role === 'admin') {
     s += '<div class="card action-row amber" onclick="openAdd()">' +
@@ -934,6 +952,38 @@ function renderFaq(){
   return s;
 }
 
+
+
+function renderResources(){
+  var resources = [
+    {icon:'📊', title:'الشيت الإداري', desc:'ملف الفريق والمتابعة الإدارية', url:'https://docs.google.com/spreadsheets/d/1LSesF2KllBEgl3oCumKftGtZg6pIOppYV6_nn9EyTE0/edit?usp=sharing'},
+    {icon:'❓', title:'الأسئلة الشائعة في المنصة', desc:'صفحة الأسئلة الشائعة على YouPek', url:'https://youpek.com/faqs'},
+    {icon:'🟩', title:'لوجو المنصة — أبعاد متساوية', desc:'ملف شعار You Pek بمقاسات متساوية', url:'https://drive.google.com/file/d/1AYLuBGfbL3sKGFeDwK1ZOXuZ3J2WLcaj/view?usp=sharing'},
+    {icon:'🖼️', title:'لوجو المنصة — شفاف PNG', desc:'نسخة شفافة من شعار المنصة', url:'https://drive.google.com/file/d/1ADbcFnzVM2CsAX9CWW8j5mWULindSfJ5/view?usp=sharing'},
+    {icon:'🎨', title:'أيقونة المنصة — PNG', desc:'ملف أيقونة You Pek بصيغة PNG', url:'https://drive.google.com/file/d/1f8HndsJAI8pptHGLlHYTpTSPi_7Tbm45/view?usp=sharing'},
+    {icon:'📁', title:'ملف تصميمات للمشاركة', desc:'مجلد التصميمات الجاهزة للمشاركة', url:'https://drive.google.com/drive/folders/1041zyIXfPLR40Az94LiQlhs-5Ql473LY?usp=sharing'},
+    {icon:'🎯', title:'ألوان هوية You Pek', desc:'مرجع ألوان الهوية البصرية', url:'https://drive.google.com/file/d/1OQD4H3vJiBlbVlzdhZ8YnDSCZKAjlch_/view?usp=sharing'},
+    {icon:'📘', title:'فيسبوك المنصة', desc:'صفحة You Pek على فيسبوك', url:'https://www.facebook.com/youpek'},
+    {icon:'📸', title:'إنستجرام المنصة', desc:'حساب You Pek على إنستجرام', url:'https://www.instagram.com/youpek_com'},
+    {icon:'🌐', title:'رابط المنصة', desc:'الموقع الرسمي لـ You Pek', url:'https://youpek.com/'}
+  ];
+  var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
+    '<div><h2>موارد وروابط مهمة</h2><p>روابط وملفات يحتاجها فريق العمل باستمرار</p></div></div>';
+  s += '<div class="card resource-intro">كل الروابط المهمة للفريق في مكان واحد. اضغط على أي مورد لفتحه في صفحة جديدة.</div>';
+  resources.forEach(function(item){
+    s += '<a class="card resource-card" href="'+item.url+'" target="_blank" rel="noopener noreferrer">' +
+      '<div class="resource-icon">'+item.icon+'</div>' +
+      '<div class="resource-copy"><strong>'+item.title+'</strong><span>'+item.desc+'</span></div>' +
+      '<div class="resource-arrow">↗</div></a>';
+  });
+  s += '<div class="card resource-card disabled" aria-disabled="true">' +
+    '<div class="resource-icon">📱</div><div class="resource-copy"><strong>رابط تطبيق الموبايل</strong>' +
+    '<span>لم يتوفر بعد</span></div><div class="resource-arrow">—</div></div>';
+  s += '<a class="card resource-card" href="https://chat.whatsapp.com/G28RWkjkyGzC5Eg29RNlXB" target="_blank" rel="noopener noreferrer">' +
+    '<div class="resource-icon">💬</div><div class="resource-copy"><strong>جروب فريق العمل على واتساب</strong>' +
+    '<span>للتواصل والتنسيق بين أعضاء الفريق</span></div><div class="resource-arrow">↗</div></a>';
+  return s;
+}
 
 function copyReply(id){
   var subject=document.getElementById('reply-subject-'+id);
