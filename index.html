@@ -225,6 +225,21 @@
   .faq-answer strong{color:var(--ink);}
   .faq-contact{padding:16px;background:var(--primary-soft);border-radius:var(--radius-md);color:var(--primary-dark);font-weight:700;line-height:1.8;font-size:13px;margin-top:14px;}
 
+
+  /* ---- ready-made user reply templates ---- */
+  .reply-intro{padding:15px 16px;margin-bottom:14px;line-height:1.8;font-size:13px;color:var(--ink-soft);}
+  .reply-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .reply-search{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-md);font:inherit;background:var(--surface);color:var(--ink);}
+  .reply-card{padding:15px;margin-bottom:12px;}
+  .reply-card h3{font-family:'Cairo';font-size:14px;line-height:1.7;margin:0 0 12px;}
+  .reply-card label{display:block;font-size:12px;font-weight:700;margin:10px 0 6px;color:var(--ink-soft);}
+  .reply-subject,.reply-body{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font:inherit;font-size:13px;line-height:1.8;background:var(--surface);color:var(--ink);}
+  .reply-body{min-height:180px;resize:vertical;white-space:pre-wrap;}
+  .reply-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .reply-card-actions .btn{flex:1;min-width:130px;}
+  .reply-placeholder-note{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:8px;}
+  .reply-hidden{display:none!important;}
+
   .emp-row{padding:14px 16px;margin-bottom:10px;}
   .emp-row-top{display:flex;justify-content:space-between;margin-bottom:8px;}
   .emp-row-top strong{font-family:'Cairo';font-size:14px;}
@@ -506,6 +521,10 @@ function openFaq(){
   state.view = 'faq';
   render();
 }
+function openReplies(){
+  state.view = 'replies';
+  render();
+}
 
 /* ============================ تحميل بيانات الرئيسية ============================ */
 function loadHomeRings(){
@@ -674,6 +693,7 @@ function render(){
   else if (state.view === 'add') html = renderAdd();
   else if (state.view === 'report') html = renderReport();
   else if (state.view === 'faq') html = renderFaq();
+  else if (state.view === 'replies') html = renderReplies();
 
   if (!apiConfigured()){
     html = '<div class="setup-banner">⚠️ لم يتم ضبط الاتصال بقاعدة البيانات بعد. افتح ملف <code>index.html</code> وضع رابط Google Apps Script داخل <code>CONFIG.API_URL</code> في أعلى الملف.</div>' + html;
@@ -731,6 +751,9 @@ function renderHome(){
     '<div class="arrow">‹</div></div>';
   s += '<div class="card action-row" onclick="openFaq()">' +
     '<div class="ic">📚</div><div class="txt"><strong>تعليمات وأسئلة شائعة</strong><span>إرشادات العمل والإجابة عن استفسارات الفريق</span></div>' +
+    '<div class="arrow">‹</div></div>';
+  s += '<div class="card action-row" onclick="openReplies()">' +
+    '<div class="ic">💬</div><div class="txt"><strong>قوالب ردود جاهزة</strong><span>رسائل قابلة للتعديل والنسخ للرد على المستخدمين</span></div>' +
     '<div class="arrow">‹</div></div>';
   if (state.user && state.user.role === 'admin') {
     s += '<div class="card action-row amber" onclick="openAdd()">' +
@@ -910,6 +933,47 @@ function renderFaq(){
   s += '<div class="faq-contact">هل لديك سؤال أو استفسار آخر؟ توجّه مباشرة إلى جروب واتساب للفريق وشارك استفسارك مع الأعضاء.</div>';
   return s;
 }
+
+
+function copyReply(id){
+  var subject=document.getElementById('reply-subject-'+id);
+  var body=document.getElementById('reply-body-'+id);
+  if(!subject||!body)return;
+  var text='العنوان: '+subject.value+'\n\nالرسالة:\n'+body.value;
+  function fallbackCopy(){
+    var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('تم نسخ القالب');}catch(e){toast('تعذر النسخ تلقائياً؛ حدّد النص وانسخه يدوياً');}
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(function(){toast('تم نسخ القالب');}).catch(fallbackCopy);}else{fallbackCopy();}
+}
+function resetReply(id){
+  var t=REPLY_TEMPLATES[Number(id)-1];if(!t)return;
+  var s=document.getElementById('reply-subject-'+id),b=document.getElementById('reply-body-'+id);
+  if(s)s.value=t.subject;if(b)b.value=t.body;toast('تمت استعادة النص الأصلي');
+}
+function filterReplies(){
+  var q=(document.getElementById('reply-search')||{}).value||'';q=q.toLowerCase();
+  document.querySelectorAll('[data-reply-card]').forEach(function(card){card.classList.toggle('reply-hidden',card.getAttribute('data-search').toLowerCase().indexOf(q)===-1);});
+}
+function renderReplies(){
+  var templates = REPLY_TEMPLATES;
+  var s='<div class="subheader"><div class="back-btn" onclick="goHome()">›</div><div><h2>قوالب ردود جاهزة</h2><p>رسائل جاهزة قابلة للتعديل والنسخ</p></div></div>';
+  s+='<div class="card reply-intro">اختر القالب المناسب، وعدّل العنوان والرسالة مباشرة قبل النسخ. استبدل البيانات الموضوعة بين الأقواس المربعة بالمعلومات الصحيحة، وتأكد من مراجعة الرسالة قبل إرسالها.</div>';
+  s+='<div class="reply-tools"><input id="reply-search" class="reply-search" type="search" placeholder="ابحث عن قالب…" oninput="filterReplies()"></div>';
+  templates.forEach(function(t,i){
+    var id=''+(i+1);
+    s+='<section class="card reply-card" data-reply-card data-search="'+escapeAttr(t.name+' '+t.subject+' '+t.body)+'">';
+    s+='<h3><span class="faq-num">'+(i+1)+'</span> '+escapeHtml(t.name)+'</h3>';
+    s+='<label for="reply-subject-'+id+'">العنوان</label><input class="reply-subject" id="reply-subject-'+id+'" value="'+escapeAttr(t.subject)+'">';
+    s+='<label for="reply-body-'+id+'">الرسالة</label><textarea class="reply-body" id="reply-body-'+id+'">'+escapeHtml(t.body)+'</textarea>';
+    s+='<div class="reply-card-actions"><button class="btn primary" onclick="copyReply('+id+')">📋 نسخ العنوان والرسالة</button><button class="btn secondary" onclick="resetReply('+id+')">استعادة النص الأصلي</button></div>';
+    s+='</section>';
+  });
+  s+='<div class="faq-contact">راجع بيانات المستخدم والروابط والمبالغ وأسباب الرفض قبل إرسال أي رسالة. القوالب لا تُرسل تلقائياً؛ يمكنك تعديلها ونسخها ثم إرسالها من قناة التواصل المناسبة.</div>';
+  return s;
+}
+var REPLY_TEMPLATES = [{"name": "مستخدم طلب خدمة لا نملكها", "subject": "شكراً لتقاسم أفكارك معنا في You Pek 💡", "body": "أهلاً بك [اسم المستخدم] 👋\nيسعدنا جداً اهتمامك وثقتك بـ You Pek! الخدمة التي تتواصل بخصوصها ([اسم الخدمة/القسم]) تم نشرها بواسطة فريق ترشيحات يوبك، ولم يتم نشرها بواسطة مقدم الخدمة مباشرة. يمكنك التواصل مع مقدم الخدمة بشكل مباشر عن طريق الاتصال المباشر أو الواتساب."}, {"name": "مستخدم أنشأ حساباً جديداً بالمنصة", "subject": "أهلاً بك في عائلة You Pek! 🚀", "body": "مرحباً بك [اسم المستخدم] 👋\nخطوة رائعة لبداية جديدة! يسعدنا انضمامك إلى منصة You Pek حيث تجتمع الجودة مع السهولة.\nسواء كنت تبحث عن أفضل الخدمات أو تريد تقديم خدماتك والوصول لعملاء جدد، نحن هنا لدعم رحلتك خطوة بخطوة.\n💡 نصيحة سريعة: أكمل بيانات ملفك الشخصي الآن لتتمتع بتجربة مخصصة بالكامل.\n🔗 [رابط ملفه الشخصي]"}, {"name": "مستخدم تم توثيق حسابه", "subject": "مبروك! أصبح حسابك موثقاً رسمياً 🌟", "body": "أهلاً [اسم المستخدم] 🥳\nتهانينا! تم التحقق من بياناتك وتوثيق حسابك بنجاح بشارة التوثيق المعتمدة من You Pek.\nالتوثيق يمنح عملاءك ثقة أكبر ويضاعف من فرص اختيار خدماتك على المنصة.\n🔗 [استعرض ملفك الموثق الآن: رابط ملفه الشخصي]"}, {"name": "مستخدم تم رفض توثيق حسابه", "subject": "تحديث بشأن طلب توثيق حسابك على You Pek ⚠️", "body": "أهلاً بك [اسم المستخدم] 🙏\nنشكر لك حرصك على توثيق حسابك. نود إفادتك بأنه تعذر قبول طلب التوثيق حالياً للسبب التالي:\n📌 [سبب الرفض: مثلاً الصورة غير واضحة / المستندات غير مكتملة]\nيمكنك تعديل البيانات المطلوبة وإعادة إرسال طلب التوثيق وسنقوم بمراجعته فوراً!\n🔗 إعادة رفع مستندات التوثيق: https://youpek.com/user-verification"}, {"name": "مستخدم نشر أول خدمة له", "subject": "أول خطوة نحو النجاح! نُشرت خدمتك الأولى 🚀", "body": "أهلاً [اسم المستخدم] 🌟\nخطوة ممتازة! تم استقبال خدمتك الأولى ([اسم الخدمة]) بنجاح.\nنحن نقوم حالياً بمراجعة سريعة للتأكد من مطابقتها لمعايير الجودة الشاملة قبل ظهورها للعملاء. سنوافيك بالتحديث قريباً!\n🔗 [شاهد كيف ستظهر خدمتك للعملاء: رابط الخدمة]"}, {"name": "مستخدم لم يكمل بياناته", "subject": "خطوة واحدة تفصلك عن الانطلاق على You Pek 💡", "body": "أهلاً بك [اسم المستخدم] 👋\nلاحظنا أن ملفك الشخصي لم يكتمل بعد! أكمل تفاصيل حسابك وصورتك الشخصية الآن لتظهر بشكل محترف أمام العملاء.\n🔗 إكمال البيانات: https://youpek.com/profile"}, {"name": "مستخدم تم قبول خدمته", "subject": "خدمتك أصبحت متاحة الآن على You Pek! 🎉", "body": "أهلاً [اسم المستخدم] ✨\nتم قبول خدمتك ([اسم الخدمة]) ونشرها بنجاح على المنصة!\nيمكنك الآن مشاركة رابط خدمتك على مواقع التواصل أو متابعة طلبات العملاء المباشرة عبر حسابك. نتمنى لك كل التوفيق والمزيد من الأرباح!\n🔗 [عاين خدمتك الآن: رابط الخدمة]"}, {"name": "مستخدم تم حذف خدمته", "subject": "تنبيه بشأن حذف خدمة من حسابك ⚠️", "body": "أهلاً [اسم المستخدم] 🙏\nنود إبلاغك بأنه تم حذف الخدمة ([اسم الخدمة]) من منصة You Pek بسبب [سبب الحذف: طلبك / انتهاء مهلة التعديل / عدم الالتزام بالشروط].\nإذا كان لديك أي استفسار أو ترغب في استرجاع البيانات، يمكنك التواصل مع فريق الدعم الفني فوراً.\n🔗 التواصل مع الدعم الفني: info@youpek.com"}, {"name": "مستخدم تم رفض خدمته", "subject": "تذكير بخصوص طلب نشر الخدمة 📝", "body": "أهلاً [اسم المستخدم] 👋\nنشكرك على إدراج خدمتك ([اسم الخدمة]). نود إحاطتك بأنه لم نتمكن من نشر الخدمة في شكلها الحالي للسبب التالي:\n📌 [سبب الرفض: مثلاً التفاصيل غير كافية / الصور غير واضحة / السعر غير محدد]\nيمكنك تعديل الخدمة وفقاً للملاحظات وإعادة إرسالها لتتم مراجعتها وقبولها سريعاً.\n🔗 تعديل الخدمة وإعادة الإرسال: https://youpek.com/my-ads"}, {"name": "مستخدم انتهت مدة خدمته", "subject": "انتهت مدة عرض خدمتك على You Pek ⏳", "body": "أهلاً [اسم المستخدم] 👋\nنود تذكيرك بأن مدة صلاحية نشر خدمتك ([اسم الخدمة]) قد انتهت وأصبحت غير ظاهرة في نتائج البحث.\nلإعادة تنشيط الخدمة وجلب المزيد من طلبات العملاء، يمكنك تجديدها بضغطة زر.\n🔗 [رابط الخدمة]"}, {"name": "مستخدم أبلغ عن خدمة", "subject": "تم استلام بلاغك وسنتعامل معه باهتمام 🛡️", "body": "أهلاً بك [اسم المستخدم] 👋\nنشكر حرصك وسعيك للحفاظ على جودة وأمان بيئة العمل في You Pek. تم استلام بلاغك بشأن الخدمة ([اسم الخدمة]).\nيقوم فريق الرقابة والمتابعة حالياً بمراجعة البلاغ وتطبيق الإجراءات اللازمة. أمانكم ورضاكم هو أولويتنا."}, {"name": "مستخدم تم الإبلاغ عن خدمته", "subject": "تنبيه هام بشأن إحدى خدماتك على You Pek ⚠️", "body": "أهلاً [اسم المستخدم] 🙏\nنود إفادتك بتلقينا بلاغاً بشأن خدمتك ([اسم الخدمة]) يتعلق بـ [مضمون البلاغ بشكل مختصر ومهني].\nيرجى مراجعة الخدمة والتأكد من توافقها مع شروط الاستخدام، أو التواصل معنا لتوضيح الأمر قبل اتخاذ أي إجراء على الحساب.\n🔗 تواصل مع فريق الدعم: info@youpek.com"}, {"name": "مستخدم تم تعليق حسابه", "subject": "إشعار هام: تم تعليق حسابك مؤقتاً 🛑", "body": "أهلاً [اسم المستخدم]\nنأسف لإبلاغك بأنه تم تعليق حسابك على منصة You Pek مؤقتاً بسبب [سبب التعليق: مخالفة شروط الاستخدام / سلوك غير لائق / بلاغات مكررة].\nللحفاظ على حقوق جميع الأطراف، يرجى مراجعة فريق الدعم وتقديم التوضيحات اللازمة لفك تعليق الحساب.\n📧 تواصل معنا عبر البريد: info@youpek.com"}, {"name": "مستخدم تم قبول عملية الدفع الخاصة به", "subject": "تم تأكيد عملية الدفع بنجاح! 💳", "body": "أهلاً [اسم المستخدم] ✨\nتم استلام وتحويل مبلغ [0.00 ج.م] بنجاح لرقم الطلب/الباقة (#رقم_العملية).\nتم تفعيل مميزاتك/خدمتك فوراً ويمكنك الاستفادة منها الآن. تجد تفاصيل الفاتورة داخل حسابك الشخصي.\n🔗 عرض الفاتورة: https://youpek.com/transactions"}, {"name": "مستخدم تم رفض عملية الدفع الخاصة به", "subject": "تعذر إتمام عملية الدفع ⚠️", "body": "أهلاً [اسم المستخدم] 👋\nنود إعلامك بأن عملية الدفع الأخيرة بمبلغ [0.00 ج.م] لم تكتمل بنجاح بسبب [سبب الرفض: عدم كفاية الرصيد / خطأ في بيانات الكارت / رفض البنك].\nيرجى المحاولة مرة أخرى باستخدام وسيلة دفع أخرى أو التواصل مع بنكك لتفادي إلغاء العملية."}, {"name": "مستخدم انتهت باقته المجانية", "subject": "انتهت باقتك المجانية.. ترقّ لآفاق أكبر! 🚀", "body": "أهلاً [اسم المستخدم] 👋\nنتمنى أن تكون تجربتك في الباقة المجانية على You Pek كانت مثمرة! لقد انتهت موارد باقتك المجانية.\nلا تدع أعمالك تتوقف؛ اشترك في إحدى باقاتنا المميزة وافتح مميزات إضافية لزيادة مبيعاتك ووصولك لعملاء جدد!\n🔗 استكشف الباقات المدفوعة: https://youpek.com/user-subscription"}, {"name": "مستخدم انتهى اشتراك باقته المدفوعة", "subject": "انتهت مدة اشتراك باقتك على You Pek ⏳", "body": "أهلاً [اسم المستخدم] 🌟\nنشكر ثقتك المستمرة بنا! نود تذكيرك بأن اشتراك باقتك ([اسم الباقة]) قد انتهى اليوم.\nجدد اشتراكك الآن للحفاظ على ظهور خدماتك في مقدمة نتائج البحث ولا تفوّت أي طلبات جديدة من العملاء.\n🔗 [تجديد الاشتراك الآن]"}, {"name": "مستخدم نشر محتوى مخالف", "subject": "تحذير بشأن نشر محتوى مخالف لشروط الاستخدام 🚫", "body": "أهلاً [اسم المستخدم]\nلاحظ فريق الرقابة وجود محتوى مخالف لشروط وقوانين منصة You Pek في [رابط/اسم المنشور أو الخدمة].\nتمت إزالة المحتوى المخالف. يرجى الالتزام بمعايير النشر لتجنب اتخاذ إجراءات إضافية قد تصل إلى تعليق الحساب تماماً.\n🔗 قراءة شروط وسياسة النشر: https://youpek.com/terms-and-condition"}, {"name": "مستخدم قدم طلباً أو استفساراً مباشراً", "subject": "أهلاً بك! تم استلام رسالتك في You Pek 💬", "body": "أهلاً بك [اسم المستخدم] 👋\nشكراً لتواصلك معنا! تم استلام استفسارك/طلبك بنجاح، ويقوم أحد ممثلي فريق خدمة العملاء بمراجعته حالياً.\nسنقوم بالرد عليك خلال [مثلاً: ساعتين / أقل من 24 ساعة]. سعداء بخدمتك دائماً!"}];
 
 function renderReport(){
   var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
