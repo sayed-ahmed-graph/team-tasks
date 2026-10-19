@@ -211,6 +211,20 @@
   .top-card strong{font-family:'Cairo';display:block;font-size:15px;}
   .top-card span{font-size:12px;color:var(--ink-soft);}
 
+  /* ---- team instructions / FAQ ---- */
+  .faq-intro{padding:15px 16px;margin-bottom:14px;line-height:1.8;font-size:13px;color:var(--ink-soft);}
+  .faq-item{padding:0;margin-bottom:10px;overflow:hidden;}
+  .faq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:15px 16px;font-family:'Cairo';font-weight:700;font-size:13px;line-height:1.7;}
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary:after{content:'＋';margin-inline-start:auto;color:var(--primary);font-size:18px;flex-shrink:0;}
+  .faq-item[open] summary:after{content:'−';}
+  .faq-num{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:9px;background:var(--primary-soft);color:var(--primary-dark);font-size:12px;}
+  .faq-answer{padding:0 16px 16px;line-height:1.9;font-size:13px;color:var(--ink-soft);}
+  .faq-answer ul{margin:0;padding-inline-start:20px;}
+  .faq-answer li{margin:5px 0;}
+  .faq-answer strong{color:var(--ink);}
+  .faq-contact{padding:16px;background:var(--primary-soft);border-radius:var(--radius-md);color:var(--primary-dark);font-weight:700;line-height:1.8;font-size:13px;margin-top:14px;}
+
   .emp-row{padding:14px 16px;margin-bottom:10px;}
   .emp-row-top{display:flex;justify-content:space-between;margin-bottom:8px;}
   .emp-row-top strong{font-family:'Cairo';font-size:14px;}
@@ -488,6 +502,10 @@ function openReport(){
   render();
   loadReport();
 }
+function openFaq(){
+  state.view = 'faq';
+  render();
+}
 
 /* ============================ تحميل بيانات الرئيسية ============================ */
 function loadHomeRings(){
@@ -655,6 +673,7 @@ function render(){
   else if (state.view === 'daily') html = renderDaily();
   else if (state.view === 'add') html = renderAdd();
   else if (state.view === 'report') html = renderReport();
+  else if (state.view === 'faq') html = renderFaq();
 
   if (!apiConfigured()){
     html = '<div class="setup-banner">⚠️ لم يتم ضبط الاتصال بقاعدة البيانات بعد. افتح ملف <code>index.html</code> وضع رابط Google Apps Script داخل <code>CONFIG.API_URL</code> في أعلى الملف.</div>' + html;
@@ -709,6 +728,9 @@ function renderHome(){
   s += '<div class="secondary-actions">';
   s += '<div class="card action-row" onclick="openReport()">' +
     '<div class="ic">📊</div><div class="txt"><strong>تقرير الفريق</strong><span>عدد المهام والمكتملة والأكثر إنجازاً</span></div>' +
+    '<div class="arrow">‹</div></div>';
+  s += '<div class="card action-row" onclick="openFaq()">' +
+    '<div class="ic">📚</div><div class="txt"><strong>تعليمات وأسئلة شائعة</strong><span>إرشادات العمل والإجابة عن استفسارات الفريق</span></div>' +
     '<div class="arrow">‹</div></div>';
   if (state.user && state.user.role === 'admin') {
     s += '<div class="card action-row amber" onclick="openAdd()">' +
@@ -807,6 +829,85 @@ function renderAdd(){
   s += '<button class="btn primary block" onclick="submitAdd()">إضافة المهمة للأسابيع القادمة</button>';
   s += '</div>';
 
+  return s;
+}
+
+function renderFaq(){
+  var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
+    '<div><h2>تعليمات وأسئلة شائعة</h2><p>مرجع سريع لإجراءات فريق YouPek</p></div></div>';
+  s += '<div class="card faq-intro">راجع التعليمات التالية عند مراجعة الخدمات أو إضافة خدمات جديدة أو التعامل مع حسابات المستخدمين. اضغط على أي سؤال لعرض التفاصيل.</div>';
+  var items = [
+    {q:'ما هي معايير تحديث خدمة تم رفعها بواسطة الإدارة؟',a:[
+      'تحديث العنوان دون تغيير شكله أو معناه جذريًا — <strong>اختياري</strong>.',
+      'تعديل الوصف بما يتناسب مع الخدمة وعمليات البحث عليها — <strong>اختياري</strong>.',
+      'التأكد من صحة بيانات التواصل لمقدم الخدمة — <strong>مهم</strong>.',
+      'التأكد من وجود بيانات SEO صحيحة — <strong>مهم</strong>.',
+      'التأكد من صحة الموقع الجغرافي لمقدم الخدمة — <strong>مهم</strong>.',
+      'التأكد من وجود عبارة إخلاء المسؤولية في نهاية الوصف — <strong>مهم</strong>.'
+    ]},
+    {q:'ما هي معايير قبول خدمة جديدة من مستخدم في المنصة؟',a:[
+      'اختيار تصنيف مناسب للخدمة، وإذا لم يوجد تصنيف مناسب تُضاف إلى «أخرى».',
+      'عنوان مناسب وواضح يدل على طبيعة الخدمة.',
+      'وصف لا يقل عن 40 كلمة يشرح الخدمة.',
+      'رقم هاتف صالح نظريًا؛ ليس ناقصًا أو زائدًا.',
+      'صورة مناسبة للخدمة ولا تحتوي على مخالفات.'
+    ]},
+    {q:'ماذا أفعل بعد قبول خدمة جديدة من مستخدم؟',a:[
+      'التأكد من إضافة بيانات SEO صحيحة.',
+      'إرسال رسالة عبر واتساب للتحقق من صحة الرقم.',
+      'إذا كانت هذه أول خدمة للمستخدم، أرسل له إشعار تهنئة.'
+    ]},
+    {q:'ما المؤشرات التي تستدعي حذف خدمة من المنصة؟',a:[
+      'المحتوى ليس خدمة، بل منتج أو سلعة أو شيء مادي.',
+      'وجود إساءة لفظية أو معنوية لفئة معينة.',
+      'وجود صورة خادشة أو تحتوي على تعرٍّ واضح.',
+      'وجود محتوى يتعارض مع ضوابط المنصة المتعلقة بالشريعة الإسلامية.'
+    ]},
+    {q:'ما المؤشرات التي تستدعي الرفض المبدئي لخدمة؟',a:[
+      'عنوان غير واضح أو وصف غير كافٍ.',
+      'صورة تحتوي على علامة مائية لمنصات أخرى.',
+      'رقم هاتف غير صالح أو غير صحيح نظريًا.',
+      'فيديو غير ذي صلة بالخدمة.'
+    ]},
+    {q:'ما ثوابت إضافة خدمة جديدة بواسطة الإدارة؟',a:[
+      'إضافة خدمة عليها طلب بحث فعلي وتهم شريحة من المستخدمين.',
+      'إضافة الخدمة إلى مدن ومناطق لا تتوفر بها خدمات من النوع نفسه.',
+      'تجهيز عنوان ووصف وصور وبيانات SEO واضحة.',
+      'إضافة تنويه في نهاية الوصف يفيد بأن الخدمة أُضيفت بواسطة فريق YouPek.'
+    ]},
+    {q:'ما معايير الموافقة على طلب توثيق حساب مستخدم؟',a:[
+      'أن يحتوي الحساب على خدمة واحدة أو أكثر.',
+      'أن يحتوي الحساب على بريد إلكتروني ورقم هاتف.',
+      'التحقق من البريد الإلكتروني ورقم الهاتف.',
+      'إرسال الصور والمستندات المطلوبة.'
+    ]},
+    {q:'كيف أتحقق من رقم هاتف خاص بمستخدم؟',a:[
+      'أولًا، ابحث عن الرقم نفسه باستخدام محركات البحث.',
+      'إذا ظهر الرقم في نتائج البحث، فتحقق من هوية الناشر ومدى ارتباطه بالمستخدم.',
+      'إذا لم يظهر الرقم، شارك في جروب الفريق رابط الملف الشخصي على المنصة ورقم الهاتف، واطلب التحقق منه باتصال هاتفي أو عبر واتساب باستخدام أرقام المنصة الرسمية.'
+    ]},
+    {q:'ما معايير الروابط الخارجية (Backlinks) للمنصة؟',a:[
+      'اختر مواقع أو منتديات أو منصات تسمح بنشر الروابط الخارجية.',
+      'شارك الرابط بطريقة مشروعة ومتوافقة مع سياسة الموقع أو المنصة المستضيفة.',
+      'يُمنع ترك الرابط وحده في تعليق أو منشور دون محتوى ذي صلة.',
+      'يمكن إضافة الرابط في الأدلة والمواقع التي تسمح بإضافته إلى الملف الشخصي.',
+      'أمثلة: Quora، Reddit، Tumblr، Medium، Blogger، Telegraph. هذه أمثلة وليست قائمة حصرية، ويمكن إضافة مواقع أخرى مناسبة.'
+    ]},
+    {q:'كيف أتعامل مع المهام وتنظيمها؟',a:[
+      'إذا كان ترتيب المهام غير مناسب لوقتك.',
+      'إذا كانت هناك أيام لا تستطيع العمل فيها.',
+      'إذا كانت بعض المهام تحتاج إلى وقت أكبر.',
+      'إذا كان لديك اقتراح لتطوير المنصة أو تحسين أداء المهام.',
+      'إذا نسيت كلمة المرور أو واجهت مشكلة في حسابك.',
+      'في جميع هذه الحالات، ناقش الأمر على جروب واتساب للفريق؛ وسيتم أخذ الأمر في الاعتبار.'
+    ]}
+  ];
+  items.forEach(function(item,i){
+    s += '<details class="card faq-item"><summary><span class="faq-num">'+(i+1)+'</span><span>'+item.q+'</span></summary><div class="faq-answer"><ul>';
+    item.a.forEach(function(line){ s += '<li>'+line+'</li>'; });
+    s += '</ul></div></details>';
+  });
+  s += '<div class="faq-contact">هل لديك سؤال أو استفسار آخر؟ توجّه مباشرة إلى جروب واتساب للفريق وشارك استفسارك مع الأعضاء.</div>';
   return s;
 }
 
