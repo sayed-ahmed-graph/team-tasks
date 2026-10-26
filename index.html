@@ -265,6 +265,14 @@
   .resource-arrow{font-size:18px;color:var(--ink-soft);flex-shrink:0;}
   .resource-card.disabled{opacity:.65;cursor:default;}
 
+  /* ---- Service schema generator ---- */
+  .schema-intro{padding:15px 16px;margin-bottom:14px;line-height:1.8;font-size:13px;color:var(--ink-soft);}
+  .schema-card{padding:18px;margin-bottom:14px;}
+  .schema-output{width:100%;min-height:270px;resize:vertical;direction:ltr;text-align:left;white-space:pre;tab-size:2;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;padding:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#F8FBF9;color:var(--ink);}
+  .schema-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .schema-actions .btn{flex:1;min-width:130px;justify-content:center;}
+  .schema-note{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:8px;}
+
   .emp-row{padding:14px 16px;margin-bottom:10px;}
   .emp-row-top{display:flex;justify-content:space-between;margin-bottom:8px;}
   .emp-row-top strong{font-family:'Cairo';font-size:14px;}
@@ -554,6 +562,10 @@ function openResources(){
   state.view = 'resources';
   render();
 }
+function openSchema(){
+  state.view = 'schema';
+  render();
+}
 
 /* ============================ تحميل بيانات الرئيسية ============================ */
 function loadHomeRings(){
@@ -724,6 +736,7 @@ function render(){
   else if (state.view === 'faq') html = renderFaq();
   else if (state.view === 'replies') html = renderReplies();
   else if (state.view === 'resources') html = renderResources();
+  else if (state.view === 'schema') html = renderSchema();
 
   if (!apiConfigured()){
     html = '<div class="setup-banner">⚠️ لم يتم ضبط الاتصال بقاعدة البيانات بعد. افتح ملف <code>index.html</code> وضع رابط Google Apps Script داخل <code>CONFIG.API_URL</code> في أعلى الملف.</div>' + html;
@@ -800,6 +813,9 @@ function renderHome(){
     '<div class="arrow">‹</div></div>';
   s += '<div class="card action-row" onclick="openResources()">' +
     '<div class="ic">🔗</div><div class="txt"><strong>موارد وروابط مهمة</strong><span>روابط الفريق وملفات الهوية والمنصة</span></div>' +
+    '<div class="arrow">‹</div></div>';
+  s += '<div class="card action-row" onclick="openSchema()">' +
+    '<div class="ic">{ }</div><div class="txt"><strong>توليد اسكيما</strong><span>إنشاء Schema للخدمات ونسخها لاستخدامها في SEO</span></div>' +
     '<div class="arrow">‹</div></div>';
   if (state.user && state.user.role === 'admin') {
     s += '<div class="card action-row amber" onclick="openAdd()">' +
@@ -981,6 +997,80 @@ function renderFaq(){
 }
 
 
+
+function renderSchema(){
+  var s = '<div class="subheader"><div class="back-btn" onclick="goHome()">›</div>' +
+    '<div><h2>توليد اسكيما</h2><p>إنشاء Schema من نوع Service لخدمات المنصة</p></div></div>';
+  s += '<div class="card schema-intro">أدخل بيانات الخدمة ومقدمها، ثم اضغط «توليد الاسكيما». ستظهر النتيجة بصيغة JSON-LD قابلة للنسخ والإضافة إلى صفحة الخدمة.</div>';
+  s += '<section class="card schema-card">';
+  s += '<div class="field"><label for="schema-name">اسم الخدمة</label><input id="schema-name" type="text" value="شحن وتوصيل ونقل ثقيل وخدمات لوجستية" placeholder="مثال: خدمات الشحن والتوصيل" required></div>';
+  s += '<div class="field"><label for="schema-description">وصف الخدمة</label><textarea id="schema-description" rows="4" placeholder="اكتب وصفاً واضحاً للخدمة" required>توفير حلول لنقل البضائع بين المصانع والمخازن ومراكز التوزيع، ونقل الحاويات مع المتابعة اللحظية للشحنات.</textarea></div>';
+  s += '<div class="field"><label for="schema-provider">اسم النشاط التجاري أو مقدم الخدمة</label><input id="schema-provider" type="text" placeholder="اسمك التجاري أو اسم حسابك" required></div>';
+  s += '<div class="field"><label for="schema-country">الدولة المستهدفة</label><input id="schema-country" type="text" value="Egypt" placeholder="مثال: Egypt" required><div class="hint">اكتب اسم الدولة باللغة الإنجليزية، مثل Egypt.</div></div>';
+  s += '<div class="field"><label for="schema-type">نوع الخدمة (Service Type)</label><input id="schema-type" type="text" value="Logistics and Freight" placeholder="مثال: Logistics and Freight" required></div>';
+  s += '<button class="btn primary block" type="button" onclick="generateServiceSchema()">✨ توليد الاسكيما</button>';
+  s += '</section>';
+  s += '<section class="card schema-card"><div class="field"><label for="schema-output">الاسكيما الناتجة — JSON-LD</label><textarea id="schema-output" class="schema-output" spellcheck="false" readonly placeholder="ستظهر الاسكيما هنا بعد التوليد"></textarea><div class="schema-note">راجع البيانات قبل النشر، وتأكد من أن اسم الخدمة والوصف وبيانات مقدمها تطابق محتوى صفحة الخدمة.</div></div>';
+  s += '<div class="schema-actions"><button class="btn primary" type="button" onclick="copyServiceSchema()">📋 نسخ الاسكيما</button><button class="btn ghost" type="button" onclick="downloadServiceSchema()">⬇️ تنزيل JSON</button></div></section>';
+  return s;
+}
+function generateServiceSchema(){
+  var name = (document.getElementById('schema-name').value || '').trim();
+  var description = (document.getElementById('schema-description').value || '').trim();
+  var provider = (document.getElementById('schema-provider').value || '').trim();
+  var country = (document.getElementById('schema-country').value || '').trim();
+  var serviceType = (document.getElementById('schema-type').value || '').trim();
+  if (!name || !description || !provider || !country || !serviceType){
+    toast('من فضلك أكمل جميع الحقول قبل التوليد');
+    return;
+  }
+  var schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: name,
+    description: description,
+    provider: {
+      '@type': 'LocalBusiness',
+      name: provider
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: country
+    },
+    serviceType: serviceType
+  };
+  document.getElementById('schema-output').value = JSON.stringify(schema, null, 2);
+  toast('تم توليد الاسكيما بنجاح');
+}
+function copyServiceSchema(){
+  var output = document.getElementById('schema-output');
+  if (!output || !output.value.trim()){
+    toast('ولّد الاسكيما أولاً');
+    return;
+  }
+  function fallbackCopy(){
+    output.focus(); output.select();
+    try { if(document.execCommand('copy')) toast('تم نسخ الاسكيما'); else toast('حدّد النص وانسخه يدوياً'); }
+    catch(e){ toast('حدّد النص وانسخه يدوياً'); }
+  }
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(output.value).then(function(){ toast('تم نسخ الاسكيما'); }).catch(fallbackCopy);
+  } else { fallbackCopy(); }
+}
+function downloadServiceSchema(){
+  var output = document.getElementById('schema-output');
+  if (!output || !output.value.trim()){
+    toast('ولّد الاسكيما أولاً');
+    return;
+  }
+  var blob = new Blob([output.value + '\n'], {type:'application/ld+json;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'service-schema.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('تم تنزيل ملف الاسكيما');
+}
 
 function renderResources(){
   var resources = [
